@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE specific files
+.idea/
+.vscode/
+
+# Add other specific files/folders if needed
+# e.g., if 'cases' contains very large, non-essential files:
+# cases/some_large_subfolder/

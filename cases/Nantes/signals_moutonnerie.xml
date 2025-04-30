@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2025-04-24 16:45:49 by Eclipse SUMO netedit Version 1.22.0
+<neteditConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/neteditConfiguration.xsd">
+
+    <input>
+        <sumocfg-file value="C:\Users\ASUS\Documents\Stage LS2N\Nantes_simulation\cases\Nantes\Network.sumocfg"/>
+        <additional-files value="C:\Users\ASUS\Documents\Stage LS2N\Nantes_simulation\cases\Nantes\add.add.xml"/>
+        <route-files value="C:\Users\ASUS\Documents\Stage LS2N\Nantes_simulation\cases\Nantes\MyRoutes.rou.xml"/>
+        <sumo-net-file value="C:\Users\ASUS\Documents\Stage LS2N\Nantes_simulation\cases\Nantes\MyNetwork.net.xml"/>
+    </input>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="0"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.50"/>
+        <rectangular-lane-cut value="0"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="0"/>
+    </pedestrian>
+
+</neteditConfiguration>
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <tlLogic id="-54985" type="static" programID="0" offset="0">
+
+    <!-- 1. Southbound Through & Right -->
+    <phase duration="15" state="GGGrrrrrrrrrrrr"/>
+    <phase duration="3"  state="yyyrrrrrrrrrrrr"/>
+
+    <!-- 2. Northbound Through & Right -->
+    <phase duration="15" state="rrrGGGrrrrrrrrr"/>
+    <phase duration="3"  state="rrryyyrrrrrrrrr"/>
+
+    <!-- 3. Eastbound Through & Right -->
+    <phase duration="15" state="rrrrrrGGGrrrrrr"/>
+    <phase duration="3"  state="rrrrrryyyrrrrrr"/>
+
+    <!-- 4. Westbound Through & Right -->
+    <phase duration="15" state="rrrrrrrrrrGGGrr"/>
+    <phase duration="3"  state="rrrrrrrrrryyyrr"/>
+
+    <!-- 5. Protected Left Turns (S + N) -->
+    <phase duration="12" state="rGrGrrrrrrrrrrr"/>
+    <phase duration="3"  state="ryryrrrrrrrrrrr"/>
+
+    <!-- 6. Protected Left Turns (E + W) -->
+    <phase duration="12" state="rrrrrrGrGrGrrrr"/>
+    <phase duration="3"  state="rrrrrryryryrrrr"/>
+
+    <!-- 7. Diagonal Minor Movement (Index 12 only) -->
+    <phase duration="8"  state="rrrrrrrrrrrrGrr"/>
+    <phase duration="3"  state="rrrrrrrrrrrryrr"/>
+
+</tlLogic>
+
+
+</additional>

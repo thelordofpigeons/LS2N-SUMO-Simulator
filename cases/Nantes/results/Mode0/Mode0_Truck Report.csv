@@ -1,0 +1,3 @@
+Simulation started at 12:08:05 ended at 12:08:05
+step;time;inTrucks[#];Total distance[km/T.U];Average Speed[km/h/truck];parked[#];Parkings[%];Total CO2[g/T.U];Total NOx[g/T.U];TWT [T.U];inPort[#];Current Trucks[#]
+1;0.016666666666666666;0;0;0;0;0.0;0;0;0;0;0;

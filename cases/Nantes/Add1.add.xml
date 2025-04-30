@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2021-10-07 14:26:11 by Eclipse SUMO netedit Version 1.9.2
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="C:\Users\wboua\eclipse-workspace\UPHFdemonstrator\Cases\MarsFull\MyNetwork.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="C:\Users\wboua\eclipse-workspace\UPHFdemonstrator\Cases\MarsFull\MyNetwork.net.xml"/>
+        <output.street-names value="true"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <netedit>
+        <additional-files value="C:\Users\wboua\eclipse-workspace\UPHFdemonstrator\Cases\MarsFull\Add.add.xml"/>
+    </netedit>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+
+<!--additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <parkingArea id="Crane1" lane="-110887_0" startPos="30.00" endPos="80.00" name="Crane1" roadsideCapacity="1" friendlyPos="1" width="10.00"/>
+    <parkingArea id="Crane2" lane="-115104_0" startPos="30.00" endPos="80.00" name="Crane2" roadsideCapacity="1" width="10.00"/>
+    <parkingArea id="Parking1" lane="--113673#2_0" startPos="20.00" endPos="45.00" name="Parking1" roadsideCapacity="3" friendlyPos="1" length="10" angle="120.00"/>
+    <parkingArea id="Parking2" lane="--108743#8_0" startPos="35.00" endPos="65.00" name="Parking2" roadsideCapacity="3" friendlyPos="1" length="10" angle="120.00"/>
+    <parkingArea id="Parking3" lane="--117306#1_0" startPos="0.00" endPos="70.00" name="Parking3" roadsideCapacity="10" length="20" angle="120.00"/>
+</additional-->
+<additional>
+    <!-- No parking areas or special stops defined yet -->
+</additional>

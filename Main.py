@@ -314,13 +314,13 @@ CHX_VehType.pack(pady=5, fill=X, padx=5)
 # Infrastructure only checkbox
 def toggle_infra_only():
     if var_infra_only.get():
+        # Checkbox is checked: Disable entry, set value to 0
         entry_truck_count.delete(0, END)
         entry_truck_count.insert(0, "0")
         entry_truck_count.config(state=DISABLED)
     else:
-        # Only enable if the create button is also enabled (i.e., not during creation)
-        if btn_create['state'] == NORMAL:
-            entry_truck_count.config(state=NORMAL)
+        # Checkbox is unchecked: Enable entry, reset value to 10
+        entry_truck_count.config(state=NORMAL) # <<< This line is simplified
         entry_truck_count.delete(0, END)
         entry_truck_count.insert(0, "10")
 

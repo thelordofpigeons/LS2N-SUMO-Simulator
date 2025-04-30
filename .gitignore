@@ -46,3 +46,6 @@ Thumbs.db
 *.7z
 *.tar.gz
 *.tgz
+
+# --- User Configuration ---
+gui_config.json

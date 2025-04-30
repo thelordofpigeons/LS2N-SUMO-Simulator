@@ -6,11 +6,11 @@ from tkinter import ttk, messagebox
 import Starter, Creator
 import os
 import threading # Added for Progress Bar
-
+import tkinter.scrolledtext as scrolledtext 
 # --- Define Config File Path ---
 CONFIG_FILE = "gui_config.json"
 
-# --- Add Save Settings Function ---
+
 def save_settings():
     """Saves current GUI settings to a JSON file."""
     settings = {
@@ -20,15 +20,17 @@ def save_settings():
         "vehicle_type": CHX_VehType.get(),
         "infra_only": var_infra_only.get(),
         "launch_mode": var_launch_mode.get()
+        # Add last_created_map if you implement that feature later
     }
     try:
         with open(CONFIG_FILE, 'w') as f:
             json.dump(settings, f, indent=4)
-        print(f"Settings saved to {CONFIG_FILE}") # Optional: confirmation
+        log_message(f"Settings saved to {CONFIG_FILE}")
     except IOError as e:
-        print(f"Error saving settings to {CONFIG_FILE}: {e}")
+        log_message(f"ERROR saving settings to {CONFIG_FILE}: {e}")
     except Exception as e:
-        print(f"An unexpected error occurred while saving settings: {e}")
+        log_message(f"ERROR saving settings ({type(e).__name__}): {e}")
+
 
 # --- Add Load Settings Function ---
 def load_settings():
@@ -173,7 +175,7 @@ def create_instance():
          return
 
     # --- Start Progress Bar Logic ---
-    status_var.set(f"Creating instance for '{map_name}'...")
+    log_message(f"Creating instance for '{map_name}' with {truck_count} {vehicle_type}(s)...")
     progress_bar.pack(pady=(10, 0), fill=X, padx=5) # Show progress bar
     progress_bar.start(10) # Start indeterminate progress
     btn_create.config(state=DISABLED) # Disable button
@@ -226,13 +228,14 @@ def _check_creator_thread(thread, map_name, truck_count):
 
 
         if window.creator_result["success"]:
-            messagebox.showinfo("Success", window.creator_result["message"])
-            status_var.set("Instance created successfully.")
+            log_message(f"SUCCESS: {window.creator_result['message']}")
+            messagebox.showinfo("Success", window.creator_result["message"]) # Keep popup for clear success
         else:
-            # Show a more specific error if available
             error_details = f"\nDetails: {window.creator_result['error']}" if window.creator_result['error'] else ""
-            messagebox.showerror("Error", window.creator_result["message"] + error_details)
-            status_var.set("Instance creation failed.")
+            log_message(f"ERROR: {window.creator_result['message']}{error_details}")
+            messagebox.showerror("Error", window.creator_result["message"] + error_details) # Keep popup for errors
+        log_message("-" * 20) # Add separator
+
 
 def launch_instance():
     selected_map = CHX_Launch.get()
@@ -251,15 +254,21 @@ def launch_instance():
     # --- END: Get and validate launch mode ---
 
     messagebox.showinfo("Launching", f"Launching simulation on {map_name} with mode '{launch_mode}'")
-    status_var.set(f"Launching simulation on {map_name} (Mode: {launch_mode})...")
+    log_message(f"Attempting to launch simulation on {map_name} (Mode: {launch_mode})...")
 
     try:
         window.quit() # Quit GUI before blocking call
         Starter.start(map_name, launch_mode) # Pass the user-defined mode
     except Exception as e:
+        # Log error *before* quitting if possible, though it won't persist long
+        log_message(f"ERROR launching {map_name} (Mode: {launch_mode}): {e}")
         print(f"Error during Starter.start for {map_name} (Mode: {launch_mode}): {e}")
-        # Status update won't be visible as GUI is closed
-        # status_var.set("Simulation launch failed.")
+        # Maybe show an error popup *before* quitting
+        messagebox.showerror("Launch Error", f"Failed to launch simulation for {map_name}.\nCheck console/log for details.\n\n{e}")
+        # Force GUI update to show log/popup before quitting (might not always work reliably)
+        window.update_idletasks()
+        # Then quit
+        window.quit() # Ensure window closes even on error after showing msg
 
 
 # --- GUI Setup ---
@@ -275,7 +284,7 @@ map_list = get_available_maps()
 
 # Main Frame
 main_frame = Frame(window, bg="#ffffff")
-main_frame.pack(pady=30, fill=BOTH, expand=True) # Allow frame to expand
+main_frame.pack(pady=15, padx=10, fill=BOTH, expand=True) # Allow frame to expand
 main_frame.columnconfigure(0, weight=1) # Make columns expandable
 main_frame.columnconfigure(1, weight=1)
 main_frame.rowconfigure(1, weight=1)
@@ -289,8 +298,6 @@ title.grid(row=0, column=0, columnspan=2, pady=10, sticky="ew")
 create_frame = ttk.LabelFrame(main_frame, text="🛠 Create Instance", style="Card.TLabelframe", padding=20)
 # Use sticky='nsew' to make it fill the grid cell
 create_frame.grid(row=1, column=0, padx=30, pady=10, ipadx=5, ipady=5, sticky='nsew')
-# Allow content packing to align nicely
-create_frame.pack_propagate(False) # Prevent children from shrinking the frame
 
 ttk.Label(create_frame, text="Map Selection:").pack(anchor=W, padx=5)
 CHX_Create = ttk.Combobox(create_frame, values=map_list, width=28, state="readonly")
@@ -362,11 +369,33 @@ btn_launch.pack(pady=15)
 
 load_settings()
 # Status Bar
-status_var = StringVar()
-status_var.set("Ready.")
-status_bar = Label(window, textvariable=status_var, relief=SUNKEN, anchor=W,
-                   bg="#f9f9f9", font=("Segoe UI", 10), fg="#2c3e50")
-status_bar.pack(fill=X, side=BOTTOM)
+log_frame = ttk.Frame(window, padding=(10, 5))
+log_frame.pack(fill=X, expand=False, side=BOTTOM, padx=10, pady=(0, 10))
+
+log_label = ttk.Label(log_frame, text="Log Output:", font=("Segoe UI", 10, "bold"))
+log_label.pack(anchor=W)
+
+log_area = scrolledtext.ScrolledText(
+    log_frame,
+    height=8, # Adjust height as needed
+    wrap=WORD, # Wrap lines at word boundaries
+    font=("Consolas", 9), # Use a monospace font for logs if preferred
+    state=DISABLED, # Start as read-only
+    bg="#f0f0f0",
+    fg="#1a1a1a"
+)
+log_area.pack(fill=BOTH, expand=True)
+
+# --- Add Log Message Function ---
+def log_message(message):
+    """Appends a message to the log area."""
+    log_area.config(state=NORMAL) # Enable writing
+    log_area.insert(END, message + "\n")
+    log_area.config(state=DISABLED) # Disable writing
+    log_area.see(END) # Scroll to the end
+
+log_message("LS2N Simulator Ready.")
+log_message("Please select map and options, then Create or Launch.")
 
 window.protocol("WM_DELETE_WINDOW", on_closing)
 # Run App

@@ -1,17 +1,48 @@
-# Python cache
+# --- Ignore Strategy: Ignore all within case dirs, then un-ignore essentials ---
+
+# Ignore everything in each case subfolder FIRST
+# This includes generated files like MyRoutes.rou.xml, missions.mis.xml, MyTrips.trips.xml
+# and the results/ directory by default.
+cases/*/
+
+# BUT, DO NOT ignore these essential files/folders within those subdirectories:
+# Add a '!' rule for every file type you NEED to keep in the repo.
+!cases/*/Add.add.xml
+!cases/*/metaData.xml
+!cases/*/MyNetwork.net.xml
+!cases/*/Nantes.osm
+!cases/*/Network.sumocfg
+
+
+# Ensure the cases directory itself is not ignored, so Git looks inside
+!cases/
+
+# --- Standard Ignores ---
+
+# Python Cache & Compiled Files
 __pycache__/
-*.py[cod]
-*$py.class
+*.py[cod] # Handles .pyc, .pyo, .pyd
 
-# Virtual environment
+# Virtual Environments (Common Names)
 venv/
-env/
 .venv/
+env/
+ENV/
+venv.bak/
+env.bak/
 
-# IDE specific files
-.idea/
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor Files (Optional but Recommended)
 .vscode/
+.idea/
+*.iml
 
-# Add other specific files/folders if needed
-# e.g., if 'cases' contains very large, non-essential files:
-# cases/some_large_subfolder/
+# Compressed files (if you don't want archives in repo)
+*.rar
+*.zip
+*.7z
+*.tar.gz
+*.tgz

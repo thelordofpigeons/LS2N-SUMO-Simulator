@@ -1,8 +1,0 @@
-<viewsettings>
-    <viewport y="1600" x="1800" zoom="200"/>
-	<delay value="1"/>
-	<scheme name="faster standard"/>
-	<scheme delay="1"/>
-	
-	<!-- <decal file="background.gif" centerX="550.00" centerY="1530.00" width="64.00" height="64.00" rotation="0.00"/> -->
-</viewsettings>

@@ -1,0 +1,12 @@
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    
+    <!-- Vehicle Type Needed by SUMO -->
+    <vType id="passenger" accel="2.6" decel="4.5" sigma="0.5" length="5" minGap="2.5" maxSpeed="13.9" guiShape="passenger"/>
+
+    <!-- Parking Areas -->
+    <parkingArea id="Parking1" lane="-3644_0" startPos="20.00" endPos="45.00" name="Parking1" roadsideCapacity="5" friendlyPos="1" length="10" angle="120.00"/>
+    <parkingArea id="Parking2" lane="-3543_0" startPos="35.00" endPos="65.00" name="Parking2" roadsideCapacity="5" friendlyPos="1" length="10" angle="120.00"/>
+    <parkingArea id="Crane1" lane="-3542_0" startPos="30.00" endPos="80.00" name="Crane1" roadsideCapacity="5" friendlyPos="1" width="10.00"/>
+    <parkingArea id="Crane2" lane="--3514_0" startPos="30.00" endPos="80.00" name="Crane2" roadsideCapacity="5" friendlyPos="1" width="10.00"/>
+
+</additional>

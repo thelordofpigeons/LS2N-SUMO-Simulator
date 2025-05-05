@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 import queue
 import time # For basic throttling if needed
+import threading
 
 class MonitorWindow:
     def __init__(self, root, data_queue):

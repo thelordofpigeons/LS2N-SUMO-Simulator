@@ -27,24 +27,28 @@ This project provides a platform to:
 *   **Reporting:** Saves simulation results (overall stats, per-truck data) to CSV files.
 
 ## File Structure 📁
-├── cases/ # Contains simulation scenarios (maps)
 
-│ └── Nantes/ # Example map directory 
-│ ├── MyNetwork.net.xml # SUMO Network file
-│ ├── network.sumocfg # SUMO Configuration file
-│ ├── metaData.xml # Crucial: Map inputs, outputs, parkings, stops, missions templates
-│ ├── MyRoutes.rou.xml # Generated vehicle routes & departures
-│ ├── missions.mis.xml # Generated truck missions
-│ └── results/ # Simulation output reports saved here
-│ └── Mode111/ # Subdirectory for each launch mode
-├── Azure-ttk-theme-main/ # Optional: Theme files for GUI styling
-├── Creator.py # Logic for creating .rou.xml and .mis.xml files
-├── Main.py # Main GUI application entry point
-├── Starter.py # Core simulation runner using TraCI and mission logic
-├── monitor_gui.py # Code for the real-time monitor window
-├── myPyLib.py # CRUCIAL EXTERNAL LIBRARY (Needs to be present) - Contains helper functions for metadata reading, list manipulation, alternatives logic, etc.
-├── gui_config.json # Stores last used GUI settings
-└── README.md # This file
+```text
+.
+├── cases/                      # Contains simulation scenarios (maps)
+│   └── Nantes/                 # Example map directory
+│       ├── MyNetwork.net.xml   # SUMO Network file
+│       ├── network.sumocfg     # SUMO Configuration file
+│       ├── metaData.xml        # **Crucial:** Map inputs, outputs, parkings, stops, missions templates
+│       ├── MyRoutes.rou.xml    # Generated vehicle routes & departures
+│       ├── missions.mis.xml    # Generated truck missions
+│       └── results/            # Simulation output reports saved here
+│           └── Mode111/        # Subdirectory for each launch mode
+├── Azure-ttk-theme-main/       # Optional: Theme files for GUI styling
+├── Creator.py                  # Logic for creating .rou.xml and .mis.xml files
+├── Main.py                     # Main GUI application entry point
+├── Starter.py                  # Core simulation runner using TraCI and mission logic
+├── monitor_gui.py              # Code for the real-time monitor window
+├── myPyLib.py                  # **CRUCIAL EXTERNAL LIBRARY (Needs to be present)** - ...
+├── gui_config.json             # Stores last used GUI settings
+└── README.md                   # This file
+```
+
 ## Prerequisites  M️
 
 *   **Python:** Version 3.8+ recommended.

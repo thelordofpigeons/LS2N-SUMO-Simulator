@@ -2,8 +2,8 @@
 
 A Python-based framework using SUMO (Simulation of Urban MObility) to simulate truck logistics operations within a defined road network. It features a GUI for configuration and launching, real-time monitoring, and mission management for individual trucks.
 
-![Simulation GIF Placeholder](placeholder.gif)
-*(Suggestion: Create a short GIF showing the GUI, launching SUMO, and the monitor window in action. Replace `placeholder.gif` with its filename)*
+![LS2N SUMO Simulator Demo](simulation_demo.gif)
+
 
 ## Overview
 
@@ -28,7 +28,8 @@ This project provides a platform to:
 
 ## File Structure 📁
 ├── cases/ # Contains simulation scenarios (maps)
-│ └── Nantes/ # Example map directory
+
+│ └── Nantes/ # Example map directory 
 │ ├── MyNetwork.net.xml # SUMO Network file
 │ ├── network.sumocfg # SUMO Configuration file
 │ ├── metaData.xml # Crucial: Map inputs, outputs, parkings, stops, missions templates

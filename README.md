@@ -1,4 +1,49 @@
+# LS2N SUMO Logistics Simulator 🚛
 
+A Python-based framework using SUMO (Simulation of Urban MObility) to simulate truck logistics operations within a defined road network. It features a GUI for configuration and launching, real-time monitoring, and mission management for individual trucks.
+
+![Simulation GIF Placeholder](placeholder.gif)
+*(Suggestion: Create a short GIF showing the GUI, launching SUMO, and the monitor window in action. Replace `placeholder.gif` with its filename)*
+
+## Overview
+
+This project provides a platform to:
+
+1.  **Create Simulation Instances:** Define scenarios with a specific number of trucks, vehicle types, and mission sets based on map metadata.
+2.  **Run SUMO Simulations:** Launch SUMO with the generated configuration using TraCI (Traffic Control Interface) for dynamic control.
+3.  **Manage Truck Missions:** Assign and track multi-step missions for trucks (e.g., Go -> Load -> Park -> Unload -> Go).
+4.  **Monitor Simulation:** Observe real-time truck status (location, speed, current action, waiting time) in a dedicated monitor window.
+5.  **Collect Data:** Generate reports on vehicle performance, emissions (CO2, NOx), waiting times, and distance travelled.
+
+## Features ✨
+
+*   **Graphical User Interface (Tkinter):** Easy configuration of simulation parameters (Map, Truck Count, Vehicle Type, Launch Mode).
+*   **Instance Creation:** Generates SUMO route (`.rou.xml`) and mission (`.mis.xml`) files.
+*   **Dynamic Mission Control:** Uses TraCI (`Starter.py`) to assign mission steps and react to simulation events (e.g., arrival at destination, parking full).
+*   **Real-time Monitoring:** Separate GUI window (`monitor_gui.py`) displays live truck data during the simulation.
+*   **Configurable Simulation Modes:** Influence simulation behavior (e.g., parking strategies, speed adjustments) via a "Launch Mode" string.
+*   **Metadata Driven:** Relies on map-specific metadata (`metaData.xml`) for defining inputs, outputs, parking locations, stops, and mission templates.
+*   **Extensible:** Designed to work with different maps defined within the `cases/` directory.
+*   **Reporting:** Saves simulation results (overall stats, per-truck data) to CSV files.
+
+## File Structure 📁
+├── cases/ # Contains simulation scenarios (maps)
+│ └── Nantes/ # Example map directory
+│ ├── MyNetwork.net.xml # SUMO Network file
+│ ├── network.sumocfg # SUMO Configuration file
+│ ├── metaData.xml # Crucial: Map inputs, outputs, parkings, stops, missions templates
+│ ├── MyRoutes.rou.xml # Generated vehicle routes & departures
+│ ├── missions.mis.xml # Generated truck missions
+│ └── results/ # Simulation output reports saved here
+│ └── Mode111/ # Subdirectory for each launch mode
+├── Azure-ttk-theme-main/ # Optional: Theme files for GUI styling
+├── Creator.py # Logic for creating .rou.xml and .mis.xml files
+├── Main.py # Main GUI application entry point
+├── Starter.py # Core simulation runner using TraCI and mission logic
+├── monitor_gui.py # Code for the real-time monitor window
+├── myPyLib.py # CRUCIAL EXTERNAL LIBRARY (Needs to be present) - Contains helper functions for metadata reading, list manipulation, alternatives logic, etc.
+├── gui_config.json # Stores last used GUI settings
+└── README.md # This file
 ## Prerequisites  M️
 
 *   **Python:** Version 3.8+ recommended.

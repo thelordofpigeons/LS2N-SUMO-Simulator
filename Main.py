@@ -1,13 +1,15 @@
-# --- START OF FILE Main.py ---
-import json  # Needed for next commit, adding now is fine
-import tkinter.scrolledtext as scrolledtext  # Needed later for logging
-from tkinter import *
+"""LS2N Simulator GUI for Traffic Simulation Management"""
+# --- Import Required Libraries ---
+import json
+import tkinter
+import tkinter.scrolledtext as scrolledtext
+from tkinter import Tk, Frame, Label, BOTH, X, W, BOTTOM, END, NORMAL, DISABLED, StringVar, BooleanVar
 from tkinter import ttk, messagebox
+import os
+import threading
+import traceback
 import Starter
 import Creator
-import os
-import threading  # Added for Progress Bar
-import tkinter.scrolledtext as scrolledtext
 # --- Define Config File Path ---
 CONFIG_FILE = "gui_config.json"
 
@@ -24,7 +26,7 @@ def save_settings():
         # Add last_created_map if you implement that feature later
     }
     try:
-        with open(CONFIG_FILE, 'w') as f:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(settings, f, indent=4)
         log_message(f"Settings saved to {CONFIG_FILE}")
     except IOError as e:
@@ -41,7 +43,7 @@ def load_settings():
         return  # No config file, do nothing
 
     try:
-        with open(CONFIG_FILE, 'r') as f:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             settings = json.load(f)
 
         # Load Create Map (check if still valid)
@@ -138,6 +140,8 @@ def get_available_maps():
 
 
 def style_widgets():
+    """Applies custom styles to widgets using TTK themes."""
+    # Load the Azure theme
     window.tk.call("source", "Azure-ttk-theme-main/azure.tcl")
     window.tk.call("set_theme", "light")
 
@@ -168,6 +172,7 @@ def style_widgets():
 
 
 def create_instance():
+    """Creates a simulation instance based on user input."""
     selected_map = CHX_Create.get()
     # Adjust map name extraction if needed, assuming map name is the directory name now
     map_name = selected_map  # Directly use the selected directory name
@@ -267,6 +272,7 @@ def _check_creator_thread(thread, map_name, truck_count):
 
 # --- Replace the existing launch_instance function ---
 def launch_instance():
+    """Launches the simulation instance based on user input."""
     selected_map = CHX_Launch.get()
     map_name = selected_map
 
@@ -320,8 +326,8 @@ def _run_starter_thread(map_name, launch_mode):
         # Log errors that happen deep within Starter execution to console/main log
         print(
             f"ERROR in Starter thread for {map_name} (Mode: {launch_mode}): {e}")
-        import traceback
         traceback.print_exc()
+
 
         # Try logging to the main GUI log area using schedule_callback (needs window access or queue)
         # For simplicity now, just print. A queue back to Main.py would be better.
@@ -386,6 +392,7 @@ CHX_VehType.pack(pady=5, fill=X, padx=5)
 
 
 def toggle_infra_only():
+    """Toggles the truck count entry based on the checkbox state."""
     if var_infra_only.get():
         # Checkbox is checked: Disable entry, set value to 0
         entry_truck_count.delete(0, END)
@@ -452,7 +459,7 @@ log_label.pack(anchor=W)
 log_area = scrolledtext.ScrolledText(
     log_frame,
     height=8,  # Adjust height as needed
-    wrap=WORD,  # Wrap lines at word boundaries
+    wrap=tkinter.WORD,  # Wrap lines at word boundaries
     font=("Consolas", 9),  # Use a monospace font for logs if preferred
     state=DISABLED,  # Start as read-only
     bg="#f0f0f0",

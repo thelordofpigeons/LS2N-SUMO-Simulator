@@ -1,4 +1,4 @@
-# --- START OF FILE monitor_gui.py ---
+"""A GUI for monitoring simulation data in real-time using Tkinter."""
 import tkinter as tk
 from tkinter import ttk
 import queue
@@ -7,6 +7,7 @@ import threading
 
 
 class MonitorWindow:
+    """A GUI class to monitor the simulation data in real-time."""
     def __init__(self, root, data_queue):
         self.root = root
         self.data_queue = data_queue
@@ -128,8 +129,9 @@ class MonitorWindow:
                 del self.truck_data[item_id]  # Clean up stored data
 
 
-# --- Main function to start the GUI (usually called by Starter.py) ---
+
 def start_monitor_gui(data_queue):
+    """Starts the GUI for monitoring simulation data."""
     root = tk.Tk()
     app = MonitorWindow(root, data_queue)
     root.mainloop()
@@ -142,6 +144,7 @@ if __name__ == "__main__":
 
     # Function to simulate data coming from Starter.py
     def simulate_data_sender(q):
+        """Simulates sending data to the GUI."""
         truck_counter = 0
         step = 0
         action_types = ["Load", "Park", "Go", "Unload"]

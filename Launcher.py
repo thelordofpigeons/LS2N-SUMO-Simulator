@@ -70,7 +70,7 @@ def initVehicles(self):
         vehicle = self.vehicles[vehicleId]
         if vehicle is not None :  # and (traci.vehicle.getTypeID(vehID) == "TruckT"):
             #print("id= %" % traci.vehicle.getTypeID(vehID))
-            print("id= %" % traci.vehicle.getTypeID(vehicleId))
+            print("id= %s" % traci.vehicle.getTypeID(vehicleId))
             # traci.vehicle.changeTarget(vehicleId, "--101938#11")
 
 def randomInOut():

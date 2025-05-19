@@ -1,300 +1,455 @@
-import os, sys
-import sumolib ,traci
-import random
-import traci.constants as tc
-import myPyLib
+import os
+import sys
+import random  # For random.randint, random.choice
 import xml.etree.ElementTree as ET
-import assign
 
-routesPath=""
-missionPath=""
-    
-# STATE LISTENER CLASS
+import traci
+import traci.constants as tc  # Used for stop states
+import myPyLib
+
+
 class StateListener(traci.StepListener):
-    def __init__(self, vehicleIds, emergencyBreakThreshold=-4.0):
-        print("__init__!")
-        self.vehicleIds = vehicleIds
-        self.emergencyBreakThreshold = emergencyBreakThreshold
+    """
+    Listens to TraCI steps to retrieve and process simulation state.
+    """
+
+    def __init__(self, vehicle_ids, routes_path="", mission_path="", emergency_break_threshold=-4.0):
+        """
+        Initializes the StateListener.
+        Args:
+            vehicle_ids (list): List of vehicle IDs to monitor.
+            routes_path (str): Path to the routes XML file.
+            mission_path (str): Path to the missions XML file.
+            emergency_break_threshold (float): Threshold for detecting emergency breaks.
+        """
+        super().__init__()
+        print("__init__ StateListener!")
+        self.vehicle_ids = vehicle_ids
+        self.emergency_break_threshold = emergency_break_threshold
         self.vehicles = {}
-        self.emergencyBreak = False
+        self.emergency_break = False
         self.collision = False
-        print("routesPath="+routesPath)
-        print("missionPath="+missionPath)
-        routesTree = ET.parse(routesPath)
-        routesRoot = routesTree.getroot()
-        missionTree = ET.parse(missionPath)
-        missionRoot = missionTree.getroot()
-        
+
+        print(f"StateListener received routesPath={routes_path}")
+        print(f"StateListener received missionPath={mission_path}")
+
+        self.routes_root = None
+        self.mission_root = None
+
+        if routes_path and os.path.exists(routes_path):
+            try:
+                routes_tree = ET.parse(routes_path)
+                self.routes_root = routes_tree.getroot()
+            except ET.ParseError as e:
+                print(
+                    f"StateListener Error: Could not parse routes file '{routes_path}': {e}")
+        else:
+            print(
+                f"StateListener Warning: Routes file not found or path empty: '{routes_path}'")
+
+        if mission_path and os.path.exists(mission_path):
+            try:
+                mission_tree = ET.parse(mission_path)
+                self.mission_root = mission_tree.getroot()
+            except ET.ParseError as e:
+                print(
+                    f"StateListener Error: Could not parse mission file '{mission_path}': {e}")
+        else:
+            print(
+                f"StateListener Warning: Mission file not found or path empty: '{mission_path}'")
+
     def step(self, t=0):
-        self.retrieveState()
-        self.printState()
-        # self.checkEmergencyBreak()
-        self.checkCollision()
-        # indicate that the state publisher should stay active in the next step
+        """
+        Called at each simulation step.
+        """
+        self.retrieve_state()
+        self.check_collision()
         return True
 
-    def retrieveState(self):
-        # receive vehicle data
-        for vehicleId in self.vehicleIds:
-            self.vehicles[vehicleId] = traci.vehicle.getSubscriptionResults(vehicleId)
+    def retrieve_state(self):
+        """
+        Receives and stores data for subscribed vehicles.
+        """
+        for vehicle_id in list(self.vehicle_ids):
+            if vehicle_id in traci.vehicle.getIDList():
+                try:
+                    self.vehicles[vehicle_id] = traci.vehicle.getSubscriptionResults(
+                        vehicle_id)
+                except traci.TraCIException as e:
+                    print(
+                        f"StateListener: TraCI error for {vehicle_id} in retrieve_state: {e}")
+                    if vehicle_id in self.vehicles:
+                        del self.vehicles[vehicle_id]
+                    if vehicle_id in self.vehicle_ids:
+                        self.vehicle_ids.remove(vehicle_id)
+            else:
+                if vehicle_id in self.vehicles:
+                    del self.vehicles[vehicle_id]
+                if vehicle_id in self.vehicle_ids:
+                    self.vehicle_ids.remove(vehicle_id)
 
-    def printState(self):
+    def print_state(self):
+        """
+        Prints data for monitored vehicles (example).
+        """
+        for vehicle_id in self.vehicle_ids:
+            # Prefix with _ if not used further
+            _vehicle_data = self.vehicles.get(vehicle_id)
 
-        # print vehicle data
-        for vehicleId in self.vehicleIds:
-            vehicle = self.vehicles[vehicleId]
-            # if vehicleId="truck1"
-            #    print("truck %s" % (tc.CMD_LOAD))
-            # if vehicle is not None:
-            # print("a=%s" % (vehicleId))
-            # print("%s vel_t: %.2f m/s acc_t-1: %.2f m/s^2 dist: %.2f" % (vehicleId, vehicle[tc.VAR_SPEED], vehicle[tc.VAR_ACCELERATION], traci.lane.getLength(vehicle[tc.VAR_LANE_ID]) - vehicle[tc.VAR_LANEPOSITION]))
-
-    def checkCollision(self):
-        # if SUMO detects a collision (e.g. teleports a vehicle) set the collision flag
-        if (traci.simulation.getStartingTeleportNumber() > 0):
-            print("\nCollision occured...")
+    def check_collision(self):
+        """
+        If SUMO detects a collision (e.g. teleports a vehicle) set the collision flag.
+        """
+        if traci.simulation.getStartingTeleportNumber() > 0:
+            print("\nCollision occurred (teleport detected)...")
             self.collision = True
 
-    def checkEmergencyBreak(self):
-        # if any vehicle decelerates more than the emergencyBreakThreshold set the emergencyBreak flag
-        for vehicleId in self.vehicleIds:
-            vehicle = self.vehicles[vehicleId]
-            if vehicle is not None:
-                if vehicle[tc.VAR_ACCELERATION ] *10 < self.emergencyBreakThreshold:
-                    print("\nEmergency breaking required...")
-                    self.emergencyBreak = True
+    def check_emergency_break(self):
+        """
+        If any vehicle decelerates more than the emergencyBreakThreshold set the emergencyBreak flag.
+        """
+        for vehicle_id in self.vehicle_ids:
+            vehicle_data = self.vehicles.get(vehicle_id)
+            if vehicle_data:
+                acceleration = vehicle_data.get(tc.VAR_ACCELERATION)
+                if acceleration is not None and (acceleration * 10 < self.emergency_break_threshold):
+                    print(f"\nEmergency braking required for {vehicle_id}...")
+                    self.emergency_break = True
 
-def initVehicles(self):
-    print(".")
-    for vehicleId in self.vehicleIds:
-        vehicle = self.vehicles[vehicleId]
-        if vehicle is not None :  # and (traci.vehicle.getTypeID(vehID) == "TruckT"):
-            #print("id= %" % traci.vehicle.getTypeID(vehID))
-            print("id= %s" % traci.vehicle.getTypeID(vehicleId))
-            # traci.vehicle.changeTarget(vehicleId, "--101938#11")
 
-def randomInOut():
-    if (random.randint(0, 1)):
-        input =random.choice(data.northIn)
-        output =random.choice(data.southOut)
+def init_vehicles(vehicle_listener_instance):
+    """
+    Example function to initialize or print info about vehicles known to a listener.
+    """
+    print("Initializing vehicles (example)...")
+    if not hasattr(vehicle_listener_instance, 'vehicles'):
+        print("Listener instance has no 'vehicles' attribute.")
+        return
+
+    for vehicle_id, vehicle_data in vehicle_listener_instance.vehicles.items():
+        if vehicle_data is not None:
+            try:
+                vehicle_type = traci.vehicle.getTypeID(vehicle_id)
+                print(f"ID: {vehicle_id}, Type: {vehicle_type}")
+            except traci.TraCIException as e:
+                print(f"Error getting type for {vehicle_id}: {e}")
+
+
+def get_random_in_out_edges(map_metadata):
+    """
+    Selects random input and output edges based on provided metadata.
+    Args:
+        map_metadata: An object or dict expected to have 'northIn', 'southOut', etc.
+    Returns:
+        list: [input_edge, output_edge] or None if metadata is missing.
+    """
+    if not all(hasattr(map_metadata, attr) for attr in ['northIn', 'southOut', 'southIn', 'northOut']):
+        print("Error: map_metadata missing required edge list attributes.")
+        return None
+
+    if random.randint(0, 1):
+        input_edge = random.choice(map_metadata.northIn)
+        output_edge = random.choice(map_metadata.southOut)
     else:
-        input =random.choice(data.southIn)
-        output =random.choice(data.northOut)
-    result =[input ,output]
-    return result
+        input_edge = random.choice(map_metadata.southIn)
+        output_edge = random.choice(map_metadata.northOut)
+    return [input_edge, output_edge]
 
-# MAIN LAuncher  PROGRAM 
-# start(rouPath,misPath)
-def start(mapName,modeName):
-    routesPath="cases/"+mapName+"/MyRoutes.rou.xml"
-    missionPath="cases/"+mapName+"/Missions.mis.xml"
-    routesTree = ET.parse(routesPath)
-    routesRoot = routesTree.getroot()
-    missionTree = ET.parse(missionPath)
-    missionRoot = missionTree.getroot()
+
+def start_traci_and_listener(map_name, _mode_name):
+    """
+    Starts TraCI, parses route/mission files, and adds a StateListener.
+    """
+    routes_path_local = f"cases/{map_name}/MyRoutes.rou.xml"
+    mission_path_local = f"cases/{map_name}/Missions.mis.xml"
+
     print("Starting the TraCI server...")
-    sumoBinary = "C:/Program Files (x86)/Eclipse/Sumo/bin/sumo-gui"
-    sumoCmd = [sumoBinary, "-c","cases/"+mapName+"/Network.sumocfg"]
-    traci.start(sumoCmd)
-    print("Subscribing to vehicle data...")
+    sumo_binary = "C:/Program Files (x86)/Eclipse/Sumo/bin/sumo-gui"
+    sumo_cfg_file = f"cases/{map_name}/Network.sumocfg"
+    if not os.path.exists(sumo_cfg_file):
+        sumo_cfg_file = f"cases/{map_name}/network.sumocfg"
+        if not os.path.exists(sumo_cfg_file):
+            print(
+                f"ERROR: SUMO config file not found for map {map_name} at {sumo_cfg_file} (or Network.sumocfg)")
+            sys.exit(1)
+
+    sumo_cmd = [sumo_binary, "-c", sumo_cfg_file]
+    traci.start(sumo_cmd)
+
+    print("Subscribing to vehicle data (via StateListener)...")
     print("Constructing a StateListener...")
-    stateListener = StateListener(["0" ,"1"])
-    traci.addStepListener(stateListener)
-# disable speed control by SUMO
+    state_listener = StateListener(
+        ["0", "1"], routes_path=routes_path_local, mission_path=mission_path_local)
+    traci.addStepListener(state_listener)
 
-def assignMission(vehID,action):
-    newTarget=action.get("target")
-    print("assining new target="+newTarget)
-    #traci.vehicle.changeTarget(vehID,newTarget)
-    print("assignMission : Type="+str(action.get("type"))+" target="+str(action.get("target")))
-    
-    if(action.get("type")=="Load" or action.get("type")=="Unload"):
-        print(action.get("type"))
-        if(newTarget=='ContEdge0_0'):
-            traci.vehicle.changeTarget(vehID,"ContEdge0")
-            traci.vehicle.setContainerStop(vehID, "CS0", 200, 200, 0)
-        else:
-            traci.vehicle.changeTarget(vehID,"ContEdge0")
-            traci.vehicle.setContainerStop(vehID, "CS0", 150, 150, 0)
-            
-    if(action.get("type")=="Park"):
-        traci.vehicle.changeTarget(vehID, newTarget)
-        traci.vehicle.setStop(vehID, newTarget, 100, 0, 0)
-        
-    if(action.get("type")=="Go"):
-        traci.vehicle.changeTarget(vehID, newTarget)
-               
-def getAction(vehID,missionTree):
-    for mission in missionTree.getroot():
-        if vehID==mission.get("id"):
-            for action in mission:
-                if action.get("status")!="3":
-                    return action
 
-def getTarget(vehID,missionTree):
-    for mission in missionTree.getroot():
-        if vehID==mission.get("id"):
-            for action in mission:
-                #print(vehID+" action [getTarget]-> "+action.get("status"))
-                if action.get("status")=="1":
-                    #print("current action with status == 1 has taget="+action.get("target"))
-                    return action.get("target")
+def assign_mission_action(veh_id, action_element):
+    """
+    Assigns a specific mission action to a vehicle.
+    """
+    new_target = action_element.get("target")
+    action_type = action_element.get("type")
+    target_edge = action_element.get("edge", new_target)
 
-def launch(mapName,modeName):
-    
-    if 'SUMO_HOME' in os.environ:
-        tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+    if not new_target or not action_type:
+        print(
+            f"Error: Incomplete action for {veh_id}: Target='{new_target}', Type='{action_type}'")
+        return
+
+    print(
+        f"Assigning Mission for {veh_id}: Type={action_type}, Target='{new_target}', Edge='{target_edge}'")
+
+    try:
+        if not target_edge:
+            print(
+                f"Error: No valid edge determined for action {action_type} for vehicle {veh_id}")
+            return
+
+        traci.vehicle.changeTarget(veh_id, target_edge)
+
+        if action_type == "Load" or action_type == "Unload":
+            print(
+                f"  Action: {action_type} for {veh_id} at stop '{new_target}' on edge '{target_edge}'")
+            # Assuming new_target is a defined stop ID (e.g., parkingArea, busStop, containerStop)
+            # The exact stop command depends on the type of stop.
+            # For container stops (if CS0 is the ID of a <containerStop>):
+            # traci.vehicle.setContainerStop(veh_id, new_target_stop_id, duration=150) # e.g. new_target is "CS0"
+            # For parking areas used as stops:
+            traci.vehicle.setParkingAreaStop(veh_id, new_target, duration=150)
+            # For bus stops:
+            # traci.vehicle.setStop(veh_id, new_target_stop_id, duration=150, flags=tc.STOP_DEFAULT)
+
+        elif action_type == "Park":
+            print(f"  Action: Park for {veh_id} at parkingArea '{new_target}'")
+            traci.vehicle.setParkingAreaStop(veh_id, new_target, duration=100)
+
+        elif action_type == "Go":
+            print(f"  Action: Go for {veh_id}, target edge '{target_edge}'")
+
+    except traci.TraCIException as e:
+        print(f"TraCI Error in assign_mission_action for {veh_id}: {e}")
+    except IOError as e_io:  # More specific for file-related issues if any were here
+        print(f"IOError in assign_mission_action for {veh_id}: {e_io}")
+    except ValueError as e_val:  # More specific for value conversion issues
+        print(f"ValueError in assign_mission_action for {veh_id}: {e_val}")
+    # Keep a general Exception for truly unexpected issues, but try to be specific first
+    except Exception as e_unexp:  # W0718 here is acceptable if truly unexpected
+        print(
+            f"Unexpected error in assign_mission_action for {veh_id}: {e_unexp}")
+
+
+def get_pending_action(veh_id, mission_tree_root):
+    """
+    Gets the first pending action (status != '3') for a vehicle from the mission XML root.
+    """
+    if mission_tree_root is None:
+        return None
+    mission_element = mission_tree_root.find(f".//mission[@id='{veh_id}']")
+    if mission_element is not None:
+        for action_element in mission_element.findall("action"):
+            if action_element.get("status") != "3":
+                return action_element
+    return None
+
+
+def get_current_target_for_inprogress_action(veh_id, mission_tree_root):
+    """
+    Gets the target of the current in-progress action (status == '1').
+    """
+    if mission_tree_root is None:
+        return None
+    mission_element = mission_tree_root.find(f".//mission[@id='{veh_id}']")
+    if mission_element is not None:
+        for action_element in mission_element.findall("action"):
+            if action_element.get("status") == "1":
+                return action_element.get("target")
+    return None
+
+
+def launch_simulation(map_name, mode_name):
+    """
+    Main simulation launch function.
+    """
+    if 'SUMO_HOME' not in os.environ:
+        sys.exit("ERROR: please declare environment variable 'SUMO_HOME'")
+    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+    if tools not in sys.path:
         sys.path.append(tools)
+
+    print(
+        f"--- Launching simulation for map: {map_name}, mode: {mode_name} ---")
+
+    sumo_binary = "C:/Program Files (x86)/Eclipse/Sumo/bin/sumo-gui"
+    sumo_cfg_file = f"cases/{map_name}/network.sumocfg"
+    if not os.path.exists(sumo_cfg_file):
+        sumo_cfg_file = f"cases/{map_name}/Network.sumocfg"
+        if not os.path.exists(sumo_cfg_file):
+            print(f"ERROR: SUMO config file not found for map {map_name}")
+            sys.exit(1)
+
+    sumo_config_args = ["-c", sumo_cfg_file, "-S"]
+    sumo_cmd_list = [sumo_binary] + sumo_config_args
+
+    twt_trucks = 0
+    co_trucks = 0
+    co2_trucks = 0
+    stats_data_list = []
+
+    mission_file_path = f"cases/{map_name}/missions.mis.xml"
+    mission_tree_root = None
+    if os.path.exists(mission_file_path):
+        try:
+            mission_tree = ET.parse(mission_file_path)
+            mission_tree_root = mission_tree.getroot()
+        except ET.ParseError as e:
+            print(f"Error parsing mission file '{mission_file_path}': {e}")
     else:
-        sys.exit("please declare environment variable 'SUMO_HOME'")
-    
-    sumoBinary = "C:/Program Files (x86)/Eclipse/Sumo/bin/sumo-gui"  # sumo-gui
-    sumoConfig = ["-c", "cases/"+mapName+"/network.sumocfg", "-S"]
-    sumoCmd = [sumoBinary, sumoConfig[0], sumoConfig[1], sumoConfig[2]]
-    #TWT+=0
-    
-    #  #print(random.choice(list(containersDico.keys())))
-    
-    # Variables
-    
-    AWT =0  # Average Waiting time
-    TWT =0  # Total Waiting Time
-    CO =0
-    CO2 =0
-    
-    AWTtrk =0  # Average Waiting time
-    TWTtrk =0  # Total Waiting Time
-    COtrk =0
-    CO2trk =0
-    distancetrk =0
-    routesPath="cases/"+mapName+"/MyRoutes.rou.xml"
-    missionPath="cases/"+mapName+"/missions.mis.xml"
+        print(f"Warning: Mission file not found: {mission_file_path}")
 
-# traci.vehicle.setSpeedMode("veh0",0)
-# traci.vehicle.slowDown("veh0",1,3)
-    step = 1
-# add(self, vehID, routeID, typeID='DEFAULT_VEHTYPE', depart=None, departLane='first', departPos='base',
-# departSpeed='0', arrivalLane='current', arrivalPos='max', arrivalSpeed='current', fromTaz='', toTaz='',
-# line='', personCapacity=0, personNumber=0)
-# (self, vehID, stopID, duration=-1073741824.0, until=-1073741824.0, flags=1)
-# traci.vehicle.rerouteParkingArea("1", "parkingArea_--101938#11_0_0")
-    TWT=0
-    CO2=0
-    CO =0
-    NOx =0
-    Noxtrk = 0
-    distancetrk = 0  # truck distance
-    distance = 0  # total distance
-    count = 0
-    xxx = []
-    tab = []
-    boool = 0
-    
-    stopped=[]
-    initiated=[]
-    
-    parking1Rang=[]
-    parking2Rang=[]
-    VehLineStationEndPos1=[95.72 , 82.84 , 70.28 , 57.82 , 46]
-    VehLineStationstartPos1=[84.50 , 72.03 , 59.62 , 47.12 , 35]
-    VehLineStationEndPos2=[ 161.99 , 149.68 , 136.77 , 124.78 , 112.43 ]
-    VehLineStationstartPos2=[ 151.07 , 138.94 , 126.24 , 113.77 , 101.43]
-    vehpark1=[]
-    vehpark2=[]
+    traci.start(sumo_cmd_list)
+    step = 0
+    max_steps = 3000
 
-    counter=0
-    routesTree = ET.parse( "cases/"+mapName+"/MyRoutes.rou.xml")
-    missionTree = ET.parse("cases/"+mapName+"/Missions.mis.xml")
-    
-   
-    
-    while step < 3000:
-        print(traci.vehicle.getIDList())
-        flowVehicles = []
-    # print(traci.vehicle.getDistance("1"))
-
-        for vehID in traci.vehicle.getIDList():
-            if ("trk" in vehID) :
-                
-                dataa = myPyLib.getData(vehID)
-                #flowVehicles.append(vehID)
-                dataa[0] = step
-                dataa[1] = vehID
-                dataa[2] = traci.vehicle.getWaitingTime(vehID)
-                
-                #search for the corresponding mission
-                for mission in missionTree.getroot():
-                    if mission.get("id")==vehID:
-                        action=getAction(vehID,missionTree)
-                        #si deja en cours ..break
-                        if(action.get('status')=='0'):
-                            newTarget= action.get("target")
-                            action.set('status','1')
-                            assignMission(vehID, action)                           
-                            print(vehID+" New action. Target="+newTarget+" ("+action.get("type")+") status="+action.get("status")+" == "+str(mission[0].text))
-                        elif (action.get('status')=='1'):
-                            #tester si arrive
-                            if(traci.vehicle.getStopState(vehID)!=0):
-                                print("getStopState="+str(traci.vehicle.getStopState(vehID)))
-                            if(action.get('type')=='Load' and traci.vehicle.getStopState(vehID)==33):
-                                #newTarget= action.get("target")
-                                action.set('status','3')
-                            elif(action.get('type')=='Unload' and traci.vehicle.getStopState(vehID)==33):
-                                #newTarget= action.get("target")
-                                action.set('status','3')
-                            elif(action.get('type')=='Park' and traci.vehicle.getStopState(vehID)==3):
-                                newTarget= action.get("target")
-                                action.set('status','2')
-                            elif(action.get('type')=='Go'):
-                                newTarget= action.get("target")
-                                action.set('status','2')
-                        
-                            #tester si fini"   
-                # traci.vehicle.setStop(vehID,"cs0",20,23,0)
-        # print("flowVehicles= %s" % (flowVehicles))
-        if(TWT==0):
-            TWTrate =0
-        else:
-            TWTrate =(TWTtrk *100 ) /TWT
-    
-        if(CO2==0):
-            CO2rate =0
-        else:
-            CO2rate =(CO2trk *100 ) /CO2
-    
-        if(CO==0):
-            COrate =0
-        else:
-            COrate =(COtrk *100 ) /CO
-    
-        if(NOx==0):
-            Noxrate =0
-        else:
-            Noxrate =(COtrk *100 ) /NOx
-        #prk1rate =traci.parkingarea.getVehicleCount("Prk1" ) *100 /10
-        #prk2rate =traci.parkingarea.getVehicleCount("Prk2" ) *100 /10
-    
-        # print(traci.parkingarea.getVehicleCount("Prk1"))
-    
-        # if (step % 10 ==0):
-        # print("\n%s" % step)
-        # print("distancetrk= %.2f Km Totaldistance %.2f Km" % ((distancetrk/1000),(distance/1000)))
-        # print("TWTrate= %.2f TWTtrk= %s TWT= %.2f" % (TWTrate,TWTtrk,TWT))
-        # print("prk1rate = %.2f%% prk2rate = %.2f%% " % (prk1rate,prk2rate))
-        # print("CO2rate= %.2f CO2trk= %s CO2= %.2f" % (CO2rate,CO2trk,CO2))
-        # print("COrate= %.2f COtrk= %s CO2= %.2f" % (COrate,COtrk,CO))
-        # print("Noxrate= %.2f Noxtrk= %.2f CO2= %.2f" % (Noxrate,Noxtrk,NOx))
-        # advance the simulation
-        # print("\nstep: %i %s" %(step,traci.vehicle.getCO2Emission("1")))
+    while step < max_steps:
         traci.simulationStep()
-        step+=1
-    
-    myPyLib.save(xxx)
-    print()
-    print("\nStopping the TraCI server...")
+        current_active_vehicles = traci.vehicle.getIDList()
+
+        for veh_id in current_active_vehicles:
+            if "trk" in veh_id:
+                vehicle_stats = myPyLib.getData(veh_id)
+                twt_trucks += vehicle_stats[1]
+                co2_trucks += vehicle_stats[2]
+                co_trucks += vehicle_stats[3]
+                stats_data_list.append(vehicle_stats)
+
+                if mission_tree_root:
+                    action = get_pending_action(veh_id, mission_tree_root)
+                    if action is not None:
+                        action_status = action.get("status")
+                        action_type = action.get("type")
+                        action_target = action.get("target")
+
+                        if action_status == '0':
+                            assign_mission_action(veh_id, action)
+                            action.set('status', '1')
+                            print(
+                                f"{veh_id}: New action '{action_type}' Target='{action_target}'. "
+                                f"Status -> '1'."
+                            )
+                        elif action_status == '1':
+                            try:
+                                stop_state = traci.vehicle.getStopState(veh_id)
+                                # is_stopped_for_action = False # W0612: Unused if not used to change flow
+
+                                # IMPORTANT: Verify these stop state constants for your SUMO version!
+                                # tc.STOP_CONTAINER_TRIGGERED is typically bit 3 (value 8)
+                                # tc.STOP_BUS_STOPPING is typically bit 2 (value 4)
+                                # tc.STOP_WAITING_FOR_PERSON is typically bit 4 (value 16)
+                                # Original '33' was (32 | 1) - likely incorrect for loading.
+                                # Let's assume loading/unloading happens at container stops or bus stops.
+                                vehicle_stopped_for_loading = (
+                                    (action_type == 'Load' or action_type == 'Unload') and
+                                    (stop_state & tc.STOP_CONTAINER_STOPPING or  # Value 8
+                                     stop_state & tc.STOP_BUS_STOPPING or       # Value 4
+                                     stop_state & tc.STOP_WAITING_FOR_PERSON)   # Value 16
+                                )
+                                # Or if the original '33' was a custom/observed state for your setup:
+                                # vehicle_stopped_for_loading = (
+                                # (action_type == 'Load' or action_type == 'Unload') and stop_state == 33
+                                # )
+
+                                if vehicle_stopped_for_loading:
+                                    action.set('status', '3')
+                                    print(
+                                        f"{veh_id}: {action_type} completed. Status -> '3'.")
+                                # Value 1
+                                elif action_type == 'Park' and (stop_state & tc.STOP_PARKING):
+                                    action.set('status', '2')
+                                    print(
+                                        f"{veh_id}: Parked. Status -> '2'. Target: {action_target}")
+                                elif action_type == 'Go':
+                                    current_road = traci.vehicle.getRoadID(
+                                        veh_id)
+                                    if current_road == action_target or not traci.vehicle.getRoute(veh_id):
+                                        # Changed to '3' for "Go" completion
+                                        action.set('status', '3')
+                                        print(
+                                            f"{veh_id}: Go action completed. Status -> '3'.")
+                            except traci.TraCIException as e:
+                                print(
+                                    f"TraCI error checking stop state for {veh_id}: {e}")
+                        # elif action_status == '2':
+                            # If status is '2' (e.g., Parked), what makes it move to '3'?
+                            # Example: if no longer stopped for parking.
+                            # if action_type == 'Park' and not (traci.vehicle.getStopState(veh_id) & tc.STOP_PARKING):
+                            #    action.set('status', '3')
+                            #    print(f"{veh_id}: Finished Parking. Status -> '3'.")
+                            # This part (W0107: unnecessary-pass) had no logic.
+                            # If actions in status '2' need conditions to move to '3', add them here.
+
+        if step > 0 and step % 100 == 0:
+            print(f"\n--- Simulation Report at Step {step} ---")
+            # print(f"  Total Truck Waiting Time (TWTtrk): {twt_trucks}")
+            # print(f"  Total Truck CO2 Emissions (CO2trk): {co2_trucks}")
+            # print(f"  Total Truck CO Emissions (COtrk): {co_trucks}")
+
+        step += 1
+        if not current_active_vehicles and step > 50:
+            print("No more vehicles in simulation. Ending early.")
+            break
+
+    if mission_tree_root is not None:
+        try:
+            final_mission_tree_str = ET.tostring(
+                mission_tree_root, encoding='unicode')
+            with open(f"cases/{map_name}/missions_final_state.mis.xml", "w", encoding="utf-8") as f_out:
+                f_out.write(final_mission_tree_str)
+            print(
+                f"Saved final mission states to cases/{map_name}/missions_final_state.mis.xml")
+        except IOError as e_save_io:  # More specific
+            print(f"IOError saving final mission states: {e_save_io}")
+        except ET.ParseError as e_save_parse:  # If tostring created invalid XML somehow
+            print(
+                f"ParseError related to saving final mission states: {e_save_parse}")
+
+    myPyLib.save(stats_data_list)
+    print("\nSimulation loop finished.")
+    print("Stopping the TraCI server...")
     traci.close()
 
 
-#start
-launch("Nantes", "NOCITS")
-#start("Nantes", "NOCITS")
+if __name__ == "__main__":
+    sim_map_name = "Nantes"
+    sim_mode_name = "NOCITS"
+
+    try:
+        launch_simulation(sim_map_name, sim_mode_name)
+    except traci.TraCIException as e_traci_main:  # More specific for TraCI issues
+        print(
+            f"A TraCI error occurred during the simulation launch: {e_traci_main}")
+        import traceback
+        traceback.print_exc()
+    except RuntimeError as e_rt_main:  # Catch runtime errors that might not be TraCI specific
+        print(f"A runtime error occurred: {e_rt_main}")
+        import traceback
+        traceback.print_exc()
+    # Keep general Exception for truly unexpected issues
+    except Exception as e_main:  # W0718 here is acceptable as a last resort
+        print(
+            f"An unexpected error occurred during the simulation launch: {e_main}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        # Check if TraCI connection exists before trying to close it
+        # A simple way is to see if a basic command works or if it's connected.
+        # However, traci.close() itself handles cases where it's not connected.
+        # The 'isEmbedded' was one way, but if not available, direct close is fine.
+        try:
+            if traci.getConnection():  # Check if a connection object exists
+                print("Ensuring TraCI is closed.")
+                # wait=False can prevent hanging if SUMO already exited
+                traci.close(wait=False)
+        except (NameError, AttributeError):  # traci might not be imported or connection not made
+            pass  # Nothing to close
+        except traci.TraCIException:  # If traci.close() itself fails
+            print("TraCIException during final close attempt.")

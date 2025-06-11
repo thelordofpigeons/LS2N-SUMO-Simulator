@@ -7,7 +7,7 @@
 
     <input>
         <net-file value="MyNetwork.net.xml"/>
-        <route-files value="MyRoutes.rou.xml"/>
+        <route-files value="MyRoutes.rou.xml,calibrated_background_traffic_iterative.rou.xml"/>
         <additional-files value="add.add.xml"/>
     </input>
 
@@ -15,7 +15,11 @@
         <begin value="0"/>
         <end value="1000000"/>
     </time>
-
+    <report>
+        <verbose value="true"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
     <processing>
         <time-to-teleport value="-1"/>
     </processing>
@@ -24,4 +28,9 @@
         <gui-settings-file value="para.settings.xml"/>
     </gui_only>
     -->
+	<output>
+        <!-- This ensures the detector data is written -->
+        <summary-output value="summary_output.xml"/> <!-- Optional summary -->
+        <!-- The detector_aggregated_output.xml is specified by the detectors themselves -->
+    </output>
 </sumoConfiguration>
